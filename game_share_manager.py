@@ -323,28 +323,28 @@ remote_port = {self.config['local_webrtc_port']}
     <title>游戏共享平台</title>
     <meta charset="UTF-8">
     <style>
-        body {
+        body {{
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             text-align: center;
-        }
-        h1 {
+        }}
+        h1 {{
             color: #333;
-        }
-        .game-input {
+        }}
+        .game-input {{
             margin-top: 30px;
-        }
-        input[type="text"] {
+        }}
+        input[type="text"] {{
             width: 70%;
             padding: 10px;
             font-size: 16px;
             border: 1px solid #ddd;
             border-radius: 4px 0 0 4px;
             margin-right: -4px;
-        }
-        button {
+        }}
+        button {{
             padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
@@ -352,18 +352,18 @@ remote_port = {self.config['local_webrtc_port']}
             cursor: pointer;
             font-size: 16px;
             border-radius: 0 4px 4px 0;
-        }
-        button:hover {
+        }}
+        button:hover {{
             background-color: #45a049;
-        }
-        .controls {
+        }}
+        .controls {{
             margin-top: 30px;
-        }
-        .controls button {
+        }}
+        .controls button {{
             margin: 0 10px;
             border-radius: 4px;
-        }
-        .game-frame {
+        }}
+        .game-frame {{
             margin-top: 20px;
             border: 1px solid #ddd;
             height: 600px;
@@ -372,12 +372,12 @@ remote_port = {self.config['local_webrtc_port']}
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-        iframe {
+        }}
+        iframe {{
             width: 100%;
             height: 100%;
             border: none;
-        }
+        }}
     </style>
 </head>
 <body>
@@ -405,25 +405,25 @@ remote_port = {self.config['local_webrtc_port']}
     
     <script>
         // 获取DOM元素
-        const gameUrlInput = document.getElementById('gameUrl');
-        const loadGameBtn = document.getElementById('loadGameBtn');
-        const gameLoading = document.getElementById('game-loading');
-        const gameIframe = document.getElementById('game-iframe');
+        var gameUrlInput = document.getElementById('gameUrl');
+        var loadGameBtn = document.getElementById('loadGameBtn');
+        var gameLoading = document.getElementById('game-loading');
+        var gameIframe = document.getElementById('game-iframe');
         
         // 加载游戏函数
-        function loadGame() {
-            let url = gameUrlInput.value.trim();
+        function loadGame() {{
+            var url = gameUrlInput.value.trim();
             
             // 验证URL格式
-            if (!url) {
+            if (!url) {{
                 alert('请输入游戏URL');
                 return;
-            }
+            }}
             
             // 确保URL以http://或https://开头
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            if (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0) {{
                 url = 'https://' + url;
-            }
+            }}
             
             // 显示iframe，隐藏加载提示
             gameLoading.style.display = 'none';
@@ -433,28 +433,28 @@ remote_port = {self.config['local_webrtc_port']}
             gameIframe.src = url;
             
             console.log('正在加载游戏:', url);
-        }
+        }}
         
         // 添加事件监听器
         loadGameBtn.addEventListener('click', loadGame);
         
         // 支持按Enter键加载游戏
-        gameUrlInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        gameUrlInput.addEventListener('keypress', function(e) {{
+            if (e.key === 'Enter') {{
                 loadGame();
-            }
-        });
+            }}
+        }});
         
-        document.getElementById('startShareBtn').onclick = function() {
+        document.getElementById('startShareBtn').onclick = function() {{
             alert('共享功能已准备就绪！');
-        };
+        }};
         
-        document.getElementById('joinShareBtn').onclick = function() {
-            const code = prompt('请输入房间代码:');
-            if (code) {
+        document.getElementById('joinShareBtn').onclick = function() {{
+            var code = prompt('请输入房间代码:');
+            if (code) {{
                 alert('正在连接房间 ' + code + '...');
-            }
-        };
+            }}
+        }};
     </script>
 </body>
 </html>
