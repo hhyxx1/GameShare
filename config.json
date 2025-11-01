@@ -1,0 +1,16 @@
+{
+    "frps_server_ip": "127.0.0.1",
+    "frps_bind_port": 7000,
+    "frps_http_port": 8080,
+    "frps_dashboard_port": 7500,
+    "frps_token": "game_share_secret_token",
+    "local_http_port": 8000,
+    "local_webrtc_port": 8088,
+    "game_subdomain": "game",
+    "frp_version": "v0.44.0",
+    "frp_download_url": "https://github.com/fatedier/frp/releases/download/",
+    "use_tcp_tunnel": true,
+    "tcp_tunnel_remote_ip": "frp-dry.com",
+    "tcp_tunnel_remote_port": 49867,
+    "tcp_tunnel_local_port": 8000
+}

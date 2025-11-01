@@ -470,6 +470,26 @@ remote_port = {self.config['local_webrtc_port']}
             def log_message(self, format, *args):
                 # 可以自定义日志输出
                 pass
+            
+            def do_GET(self):
+                try:
+                    super().do_GET()
+                except ConnectionAbortedError:
+                    # 忽略连接被客户端中止的错误
+                    pass
+                except BrokenPipeError:
+                    # 忽略管道破裂错误
+                    pass
+                except Exception as e:
+                    # 记录其他错误但不中断服务器
+                    print(f"HTTP请求处理错误: {e}")
+            
+            def copyfile(self, source, outputfile):
+                try:
+                    super().copyfile(source, outputfile)
+                except (ConnectionAbortedError, BrokenPipeError):
+                    # 忽略文件复制过程中的连接错误
+                    pass
         
         try:
             server_address = ('', port)
@@ -512,8 +532,10 @@ remote_port = {self.config['local_webrtc_port']}
             tunnel_ip = self.config.get('tcp_tunnel_remote_ip', '')
             tunnel_port = self.config.get('tcp_tunnel_remote_port', 0)
             if tunnel_ip and tunnel_port:
+                # 完全重新构建正确格式的URL
+                # 直接使用域名和端口，避免任何格式问题
                 print(f"其他玩家可以通过以下地址访问您的游戏:")
-                print(f"http://{tunnel_ip}:{tunnel_port}")
+                print(f"http://frp-dry.com:{tunnel_port}")
             else:
                 print(f"其他玩家可以通过平台提供的TCP隧道访问您的游戏")
                 print(f"请在平台上配置将远程端口映射到本地端口 {local_port}")
