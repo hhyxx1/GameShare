@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏远程控制中心</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .header {
+            background-color: #1e1e1e;
+            color: #4CAF50;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            border-bottom: 2px solid #4CAF50;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header-info {
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 320px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            padding: 20px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+            overflow-y: auto;
+            border-right: 1px solid #333;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: #121212;
+        }
+        
+        .video-container {
+            flex: 1;
+            background-color: #0a0a0a;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        #remoteVideo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        .status-message {
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0,0,0,0.7);
+            border-radius: 8px;
+            max-width: 400px;
+        }
+        
+        .form-group {
+            margin-bottom: 22px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #e0e0e0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            background-color: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 15px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+        
+        input[type="text"]::placeholder, input[type="number"]::placeholder {
+            color: #666;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover:not(:disabled) {
+            background-color: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background-color: #444;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .control-buttons button {
+            flex: 1;
+            padding: 14px;
+        }
+        
+        .disconnect-btn {
+            background-color: #f44336 !important;
+        }
+        
+        .disconnect-btn:hover:not(:disabled) {
+            background-color: #d32f2f !important;
+        }
+        
+        .section-title {
+            color: #4CAF50;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .keyboard-shortcuts {
+            margin-top: 30px;
+        }
+        
+        .keyboard-shortcuts h3 {
+            color: #e0e0e0;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        
+        .keyboard-shortcuts ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .keyboard-shortcuts li {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background-color: #2d2d2d;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #b0b0b0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .key {
+            display: inline-block;
+            background-color: #3d3d3d;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 13px;
+            border: 1px solid #555;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .status-connected {
+            background-color: #4CAF50;
+        }
+        
+        .status-disconnected {
+            background-color: #f44336;
+            animation: none;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 12px;
+            background-color: #2d2d2d;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .info-panel {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 3px solid #4CAF50;
+            border-radius: 0 4px 4px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .info-panel h4 {
+            color: #4CAF50;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .info-panel p {
+            margin-bottom: 6px;
+            color: #b0b0b0;
+        }
+        
+        .info-panel p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .performance-stats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .performance-stats span {
+            color: #fff;
+        }
+        
+        .fps {
+            color: #4CAF50;
+        }
+        
+        .latency {
+            color: #ff9800;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 280px;
+            }
+        }
+        
+        .game-controls {
+            margin-top: 25px;
+        }
+        
+        .game-controls h3 {
+            color: #e0e0e0;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .quick-actions button {
+            padding: 10px;
+            font-size: 14px;
+            text-transform: none;
+            background-color: #3d3d3d;
+        }
+        
+        .quick-actions button:hover:not(:disabled) {
+            background-color: #4d4d4d;
+        }
+        
+        .status-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2d2d2d;
+            border-radius: 4px;
+            border-left: 3px solid #2196F3;
+        }
+        
+        .status-panel h3 {
+            color: #2196F3;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .status-panel p {
+            color: #b0b0b0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 游戏远程控制中心</h1>
+        <div class="header-info">
+            <span id="connectionTime">--:--:--</span>
+        </div>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <div class="connection-status">
+                <span class="status-indicator status-disconnected" id="statusIndicator"></span>
+                <span id="statusText">未连接</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="serverMode">模式选择</label>
+                <select id="serverMode">
+                    <option value="client">客户端模式</option>
+                    <option value="server">服务器模式</option>
+                </select>
+            </div>
+            
+            <div id="serverSettings" class="form-group" style="display: none;">
+                <label for="windowTitle">窗口标题</label>
+                <input type="text" id="windowTitle" placeholder="输入要控制的窗口标题">
+                <small style="color: #666; display: block; margin-top: 5px; font-size: 12px;">提示: 输入游戏窗口的完整或部分标题</small>
+            </div>
+            
+            <div id="clientSettings" class="form-group">
+                <label for="serverIp">服务器IP</label>
+                <input type="text" id="serverIp" placeholder="服务器IP地址" value="localhost">
+            </div>
+            
+            <div class="form-group">
+                <label for="serverPort">端口号</label>
+                <input type="number" id="serverPort" value="8888" min="1" max="65535">
+            </div>
+            
+            <div class="control-buttons">
+                <button id="connectBtn">连接</button>
+                <button id="disconnectBtn" class="disconnect-btn" disabled>断开</button>
+            </div>
+            
+            <div class="game-controls">
+                <h3>快速操作</h3>
+                <div class="quick-actions">
+                    <button onclick="sendKeyCommand('W')" disabled>前进 (W)</button>
+                    <button onclick="sendKeyCommand('S')" disabled>后退 (S)</button>
+                    <button onclick="sendKeyCommand('A')" disabled>左移 (A)</button>
+                    <button onclick="sendKeyCommand('D')" disabled>右移 (D)</button>
+                    <button onclick="sendKeyCommand('{SPACE}')" disabled>跳跃 (空格)</button>
+                    <button onclick="sendKeyCommand('{ESC}')" disabled>退出 (ESC)</button>
+                    <button onclick="sendKeyCommand('{ENTER}')" disabled>确认 (Enter)</button>
+                    <button onclick="sendKeyCommand('{TAB}')" disabled>切换 (Tab)</button>
+                </div>
+            </div>
+            
+            <div class="keyboard-shortcuts">
+                <h3>键盘快捷键</h3>
+                <ul>
+                    <li><span class="key">W/A/S/D</span> <span>移动控制</span></li>
+                    <li><span class="key">空格</span> <span>跳跃/确认</span></li>
+                    <li><span class="key">ESC</span> <span>退出/取消</span></li>
+                    <li><span class="key">Enter</span> <span>确认</span></li>
+                    <li><span class="key">Ctrl + Alt</span> <span>释放键盘控制</span></li>
+                </ul>
+            </div>
+            
+            <div class="info-panel">
+                <h4>使用说明</h4>
+                <p>1. 选择服务器或客户端模式</p>
+                <p>2. 填写必要信息后点击连接</p>
+                <p>3. 连接后可直接使用键盘控制游戏</p>
+                <p>4. 为获得最佳体验，请确保网络稳定</p>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="video-container" id="videoContainer">
+                <canvas id="remoteVideo"></canvas>
+                <div id="connectionMessage" class="status-message">
+                    <div style="margin-bottom: 15px;">🎮</div>
+                    <div>请先建立连接</div>
+                </div>
+                <div class="performance-stats" id="performanceStats" style="display: none;">
+                    <span class="fps">FPS: --</span>
+                    <span class="latency">延迟: -- ms</span>
+                </div>
+            </div>
+            
+            <div class="status-panel">
+                <h3>状态信息</h3>
+                <p id="statusPanelText">等待连接...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const serverModeSelect = document.getElementById('serverMode');
+        const serverSettings = document.getElementById('serverSettings');
+        const clientSettings = document.getElementById('clientSettings');
+        const windowTitleInput = document.getElementById('windowTitle');
+        const serverIpInput = document.getElementById('serverIp');
+        const serverPortInput = document.getElementById('serverPort');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const connectionMessage = document.getElementById('connectionMessage');
+        const connectionTime = document.getElementById('connectionTime');
+        const performanceStats = document.getElementById('performanceStats');
+        const videoContainer = document.getElementById('videoContainer');
+        const statusPanelText = document.getElementById('statusPanelText');
+        const quickActionButtons = document.querySelectorAll('.quick-actions button');
+        
+        // 创建Canvas上下文
+        const ctx = remoteVideo.getContext('2d');
+        
+        // 全局变量
+        let socket = null;
+        let ws = null;
+        let connected = false;
+        let frameCount = 0;
+        let lastFrameTime = 0;
+        let fps = 0;
+        let connectionStartTime = 0;
+        let isFullscreen = false;
+        let isKeyboardCaptured = true;
+        let latency = 0;
+        let reconnectionAttempts = 0;
+        const maxReconnectionAttempts = 3;
+        
+        // 初始化
+        function init() {
+            // 事件监听器
+            connectBtn.addEventListener('click', handleConnect);
+            disconnectBtn.addEventListener('click', disconnect);
+            serverModeSelect.addEventListener('change', toggleMode);
+            
+            // 初始模式切换
+            toggleMode();
+            
+            // 键盘事件监听
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+            
+            // 调整画布大小
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // 双击全屏
+            videoContainer.addEventListener('dblclick', toggleFullscreen);
+            
+            // 定期更新连接时间
+            setInterval(updateConnectionTime, 1000);
+            
+            // 性能统计更新
+            setInterval(updatePerformanceStats, 1000);
+            
+            // 初始化背景
+            drawInitialScreen();
+        }
+        
+        // 绘制初始屏幕
+        function drawInitialScreen() {
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, remoteVideo.width, remoteVideo.height);
+            
+            // 绘制欢迎信息
+            ctx.fillStyle = '#4CAF50';
+            ctx.font = 'bold 24px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('游戏远程控制中心', remoteVideo.width / 2, remoteVideo.height / 2 - 30);
+            
+            ctx.fillStyle = '#999';
+            ctx.font = '16px Microsoft YaHei';
+            ctx.fillText('选择模式并连接以开始控制', remoteVideo.width / 2, remoteVideo.height / 2 + 10);
+        }
+        
+        // 切换模式（服务器/客户端）
+        function toggleMode() {
+            const mode = serverModeSelect.value;
+            if (mode === 'server') {
+                serverSettings.style.display = 'block';
+                clientSettings.style.display = 'none';
+                updateStatus('等待连接（服务器模式）');
+            } else {
+                serverSettings.style.display = 'none';
+                clientSettings.style.display = 'block';
+                updateStatus('等待连接（客户端模式）');
+            }
+        }
+        
+        // 更新状态
+        function updateStatus(text, isError = false) {
+            statusText.textContent = text;
+            statusPanelText.textContent = text;
+            
+            if (isError) {
+                statusPanelText.style.color = '#f44336';
+            } else {
+                statusPanelText.style.color = '#b0b0b0';
+            }
+        }
+        
+        // 处理连接
+        async function handleConnect() {
+            const mode = serverModeSelect.value;
+            const port = serverPortInput.value;
+            
+            // 禁用连接按钮
+            connectBtn.disabled = true;
+            connectBtn.textContent = '连接中...';
+            
+            try {
+                if (mode === 'server') {
+                    const windowTitle = windowTitleInput.value.trim();
+                    if (!windowTitle) {
+                        updateStatus('请输入窗口标题', true);
+                        resetConnectButton();
+                        return;
+                    }
+                    
+                    // 向后端发送请求启动服务器
+                    const response = await fetch(`/api/start_server?window_title=${encodeURIComponent(windowTitle)}&port=${port}`);
+                    if (response.ok) {
+                        // 等待服务器启动
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        setConnectionStatus(true);
+                    } else {
+                        throw new Error('启动服务器失败');
+                    }
+                } else {
+                    const serverIp = serverIpInput.value.trim();
+                    if (!serverIp) {
+                        updateStatus('请输入服务器IP', true);
+                        resetConnectButton();
+                        return;
+                    }
+                    
+                    // 连接到服务器
+                    await connectToServer(serverIp, port);
+                }
+            } catch (error) {
+                console.error('连接错误:', error);
+                updateStatus(`连接失败: ${error.message}`, true);
+                resetConnectButton();
+            }
+        }
+        
+        function resetConnectButton() {
+            connectBtn.disabled = false;
+            connectBtn.textContent = '连接';
+        }
+        
+        // 连接到远程服务器
+        function connectToServer(serverIp, port) {
+            return new Promise((resolve, reject) => {
+                updateStatus('正在连接到服务器...');
+                
+                // 由于我们使用的是TCP套接字，这里使用WebSocket作为桥梁
+                // 实际部署时需要在服务器端运行一个WebSocket代理
+                const wsUrl = `ws://${serverIp}:${parseInt(port) + 1}`;
+                
+                // 模拟连接延迟
+                setTimeout(() => {
+                    try {
+                        // 创建一个模拟的socket对象
+                        socket = {
+                            connected: true,
+                            close: function() {
+                                this.connected = false;
+                                console.log('Socket closed');
+                            },
+                            send: function(data) {
+                                console.log('发送数据:', data);
+                                // 模拟服务器响应
+                                if (data.startsWith('KEY:')) {
+                                    console.log('收到按键命令:', data);
+                                }
+                            }
+                        };
+                        
+                        setConnectionStatus(true);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                }, 1500);
+            });
+        }
+        
+        // 断开连接
+        function disconnect() {
+            if (connected) {
+                if (socket) {
+                    socket.close();
+                    socket = null;
+                }
+                
+                if (ws) {
+                    ws.close();
+                    ws = null;
+                }
+                
+                setConnectionStatus(false);
+                resetConnectButton();
+            }
+        }
+        
+        // 设置连接状态
+        function setConnectionStatus(isConnected) {
+            connected = isConnected;
+            
+            if (isConnected) {
+                statusIndicator.className = 'status-indicator status-connected';
+                const mode = serverModeSelect.value;
+                updateStatus(mode === 'server' ? '已连接（服务器模式）' : '已连接（客户端模式）');
+                connectBtn.disabled = true;
+                connectBtn.textContent = '已连接';
+                disconnectBtn.disabled = false;
+                connectionMessage.style.display = 'none';
+                performanceStats.style.display = 'flex';
+                
+                // 启用快速操作按钮
+                quickActionButtons.forEach(btn => {
+                    btn.disabled = false;
+                });
+                
+                // 记录连接开始时间
+                connectionStartTime = Date.now();
+                lastFrameTime = Date.now();
+                frameCount = 0;
+                reconnectionAttempts = 0;
+                
+                // 开始接收视频流（模拟）
+                startVideoStream();
+            } else {
+                statusIndicator.className = 'status-indicator status-disconnected';
+                const mode = serverModeSelect.value;
+                updateStatus(mode === 'server' ? '未连接（服务器模式）' : '未连接（客户端模式）');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                connectionMessage.style.display = 'block';
+                performanceStats.style.display = 'none';
+                connectionStartTime = 0;
+                
+                // 禁用快速操作按钮
+                quickActionButtons.forEach(btn => {
+                    btn.disabled = true;
+                });
+                
+                // 清空画布
+                drawInitialScreen();
+            }
+        }
+        
+        // 开始视频流处理
+        function startVideoStream() {
+            // 在实际实现中，这里应该通过WebSocket接收视频帧
+            // 这里使用模拟的方式显示视频流
+            
+            function receiveFrame() {
+                if (!connected) return;
+                
+                // 更新帧率
+                frameCount++;
+                const now = Date.now();
+                
+                if (now - lastFrameTime >= 1000) {
+                    fps = frameCount * 1000 / (now - lastFrameTime);
+                    frameCount = 0;
+                    lastFrameTime = now;
+                }
+                
+                // 模拟接收延迟
+                latency = Math.random() * 50 + 10; // 10-60ms
+                
+                // 绘制模拟画面
+                drawSimulatedFrame();
+                
+                // 继续下一帧
+                requestAnimationFrame(receiveFrame);
+            }
+            
+            receiveFrame();
+        }
+        
+        // 绘制模拟视频帧
+        function drawSimulatedFrame() {
+            // 清空画布
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, remoteVideo.width, remoteVideo.height);
+            
+            // 绘制网格背景
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < remoteVideo.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, remoteVideo.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < remoteVideo.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(remoteVideo.width, y);
+                ctx.stroke();
+            }
+            
+            // 绘制模拟游戏元素
+            const centerX = remoteVideo.width / 2;
+            const centerY = remoteVideo.height / 2;
+            
+            // 绘制主角色
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 绘制一些移动的障碍物
+            const time = Date.now() / 1000;
+            for (let i = 0; i < 5; i++) {
+                const x = Math.sin(time + i) * (remoteVideo.width / 3) + centerX;
+                const y = Math.cos(time + i) * (remoteVideo.height / 3) + centerY;
+                
+                ctx.fillStyle = '#f44336';
+                ctx.fillRect(x - 15, y - 15, 30, 30);
+            }
+            
+            // 绘制一些静态元素
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(50, 50, 60, 60);
+            ctx.fillRect(remoteVideo.width - 110, remoteVideo.height - 110, 60, 60);
+            
+            // 显示状态信息
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(10, remoteVideo.height - 40, 150, 30);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`FPS: ${fps.toFixed(1)}`, 20, remoteVideo.height - 20);
+        }
+        
+        // 处理键盘按下事件
+        function handleKeyDown(event) {
+            // 如果不是焦点或未连接，则不处理
+            if (!isKeyboardCaptured || !connected) return;
+            
+            // 处理特殊组合键
+            if (event.ctrlKey && event.altKey) {
+                isKeyboardCaptured = false;
+                showNotification('已释放键盘控制权', 2000);
+                return;
+            }
+            
+            // 防止默认行为
+            event.preventDefault();
+            
+            // 根据按键发送相应的命令
+            let keyCommand = '';
+            
+            switch(event.key) {
+                case ' ':
+                    keyCommand = '{SPACE}';
+                    break;
+                case 'Escape':
+                    keyCommand = '{ESC}';
+                    break;
+                case 'Enter':
+                    keyCommand = '{ENTER}';
+                    break;
+                case 'Tab':
+                    keyCommand = '{TAB}';
+                    break;
+                case 'ArrowUp':
+                    keyCommand = '{UP}';
+                    break;
+                case 'ArrowDown':
+                    keyCommand = '{DOWN}';
+                    break;
+                case 'ArrowLeft':
+                    keyCommand = '{LEFT}';
+                    break;
+                case 'ArrowRight':
+                    keyCommand = '{RIGHT}';
+                    break;
+                case 'Backspace':
+                    keyCommand = '{BACKSPACE}';
+                    break;
+                case 'Delete':
+                    keyCommand = '{DELETE}';
+                    break;
+                case 'Shift':
+                case 'Control':
+                case 'Alt':
+                case 'Meta':
+                    // 忽略修饰键
+                    return;
+                default:
+                    // 对于字母键，直接使用其大写形式
+                    if (/^[a-zA-Z0-9]$/.test(event.key)) {
+                        keyCommand = event.key.toUpperCase();
+                    }
+                    break;
+            }
+            
+            if (keyCommand) {
+                sendKeyCommand(keyCommand);
+                
+                // 显示按键反馈
+                showKeyFeedback(keyCommand);
+            }
+        }
+        
+        // 显示按键反馈
+        function showKeyFeedback(key) {
+            // 创建反馈元素
+            const feedback = document.createElement('div');
+            feedback.textContent = key.replace(/[{}]/g, '');
+            feedback.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: rgba(76, 175, 80, 0.8);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 50px;
+                font-size: 32px;
+                font-weight: bold;
+                z-index: 1000;
+                pointer-events: none;
+                animation: keyFeedback 0.5s ease-out;
+            `;
+            
+            document.body.appendChild(feedback);
+            
+            // 动画结束后移除
+            setTimeout(() => {
+                document.body.removeChild(feedback);
+            }, 500);
+        }
+        
+        // 显示通知
+        function showNotification(message, duration = 3000) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #2d2d2d;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 4px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1000;
+                font-size: 14px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, duration);
+        }
+        
+        // 处理键盘释放事件
+        function handleKeyUp(event) {
+            // 在实际实现中，这里可能需要处理按键释放事件
+        }
+        
+        // 发送键盘命令
+        function sendKeyCommand(key) {
+            if (!connected) return;
+            
+            const command = `KEY:${key}`;
+            
+            // 在实际实现中，这里应该通过WebSocket或socket发送命令到服务器
+            console.log(`发送按键命令: ${command}`);
+            updateStatus(`已发送按键: ${key.replace(/[{}]/g, '')}`);
+            
+            // 模拟发送
+            if (socket && socket.connected) {
+                socket.send(command);
+            }
+        }
+        
+        // 调整画布大小
+        function resizeCanvas() {
+            const container = remoteVideo.parentElement;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // 设置画布尺寸
+            remoteVideo.width = width;
+            remoteVideo.height = height;
+            
+            // 如果未连接，重绘初始屏幕
+            if (!connected) {
+                drawInitialScreen();
+            }
+        }
+        
+        // 切换全屏
+        function toggleFullscreen() {
+            if (!isFullscreen) {
+                if (videoContainer.requestFullscreen) {
+                    videoContainer.requestFullscreen();
+                } else if (videoContainer.mozRequestFullScreen) {
+                    videoContainer.mozRequestFullScreen();
+                } else if (videoContainer.webkitRequestFullscreen) {
+                    videoContainer.webkitRequestFullscreen();
+                } else if (videoContainer.msRequestFullscreen) {
+                    videoContainer.msRequestFullscreen();
+                }
+                isFullscreen = true;
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                isFullscreen = false;
+            }
+        }
+        
+        // 更新连接时间
+        function updateConnectionTime() {
+            if (!connectionStartTime) {
+                connectionTime.textContent = '--:--:--';
+                return;
+            }
+            
+            const elapsed = Math.floor((Date.now() - connectionStartTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            connectionTime.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // 更新性能统计
+        function updatePerformanceStats() {
+            if (!connected) return;
+            
+            const fpsElement = performanceStats.querySelector('.fps');
+            const latencyElement = performanceStats.querySelector('.latency');
+            
+            fpsElement.textContent = `FPS: ${fps.toFixed(1)}`;
+            latencyElement.textContent = `延迟: ${latency.toFixed(0)} ms`;
+        }
+        
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes keyFeedback {
+                0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+                50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+            }
+            
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+        
+        // 页面失去焦点时释放键盘控制
+        window.addEventListener('blur', () => {
+            if (connected && isKeyboardCaptured) {
+                isKeyboardCaptured = false;
+            }
+        });
+        
+        // 页面获得焦点时恢复键盘控制
+        window.addEventListener('focus', () => {
+            if (connected && !isKeyboardCaptured) {
+                isKeyboardCaptured = true;
+                showNotification('已恢复键盘控制权', 1500);
+            }
+        });
+    </script>
+</body>
+</html>
