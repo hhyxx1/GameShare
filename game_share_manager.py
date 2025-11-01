@@ -332,27 +332,43 @@ class RemoteControlServer:
         
         self.running = True
         print(f"远程控制服务器已启动，监听端口: {port}")
+        print("等待客户端连接...")
         
-        try:
-            # 等待客户端连接
-            print("等待客户端连接...")
-            self.client_socket, addr = self.server_socket.accept()
-            print(f"客户端已连接: {addr}")
-            
-            # 启动捕获和控制线程
-            self.capture_thread = threading.Thread(target=self.start_capture_loop)
-            self.capture_thread.daemon = True
-            self.capture_thread.start()
-            
-            self.control_thread = threading.Thread(target=self.start_control_loop)
-            self.control_thread.daemon = True
-            self.control_thread.start()
-            
-            return True
-        except Exception as e:
-            print(f"启动远程控制服务器失败: {e}")
-            self.stop()
-            return False
+        # 在单独线程中等待客户端连接，避免阻塞主线程
+        self.accept_thread = threading.Thread(target=self._accept_client)
+        self.accept_thread.daemon = True
+        self.accept_thread.start()
+        
+        # 立即返回成功，服务器在后台运行
+        return True
+        
+    def _accept_client(self):
+        """在后台线程中接受客户端连接"""
+        while self.running:
+            try:
+                # 使用超时的accept，以便可以检查running状态
+                self.client_socket, addr = self.server_socket.accept()
+                print(f"客户端已连接: {addr}")
+                
+                # 启动捕获和控制线程
+                self.capture_thread = threading.Thread(target=self.start_capture_loop)
+                self.capture_thread.daemon = True
+                self.capture_thread.start()
+                
+                self.control_thread = threading.Thread(target=self.start_control_loop)
+                self.control_thread.daemon = True
+                self.control_thread.start()
+                
+                # 连接成功后退出此线程，后续连接处理由捕获和控制线程负责
+                break
+            except socket.timeout:
+                # 超时是正常的，继续等待
+                continue
+            except Exception as e:
+                print(f"接受客户端连接失败: {e}")
+                # 如果不是连接错误，可能是严重问题，退出循环
+                if not isinstance(e, (ConnectionResetError, BrokenPipeError)):
+                    break
     
     def stop(self):
         """停止远程控制服务器"""
@@ -372,6 +388,9 @@ class RemoteControlServer:
                 pass
         
         # 等待线程结束
+        if hasattr(self, 'accept_thread') and self.accept_thread:
+            self.accept_thread.join(1)
+        
         if self.capture_thread:
             self.capture_thread.join(1)
         
