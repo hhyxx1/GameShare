@@ -1,0 +1,47 @@
+# Python
+*.py[cod]
+__pycache__/
+*.so
+.Python
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.log
+*.bak
+*.tmp
+*.temp
+
+# FRP工具
+temp/
+frp.zip
+frp_windows_amd64/
+frpc.exe
+frps.exe
+
+# 配置文件（可选，根据需要保留）
+config.json
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+
+# 其他
+*.zip
+*.rar
+*.tar
+*.gz
+*.7z
+
+# 构建输出
+build/
+dist/
