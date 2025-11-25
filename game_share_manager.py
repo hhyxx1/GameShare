@@ -3,7 +3,8 @@
 """
 游戏共享平台管理器 - 重构版本
 
-统一管理游戏共享功能，支持服务器模式、游戏主机模式和游戏客户端模式。
+统一管理游戏共享功能，支持游戏主机模式和游戏客户端模式，
+通过第三方FRP服务器实现内网穿透。
 """
 
 import os
@@ -25,9 +26,7 @@ DEFAULT_CONFIG = {
     'use_tcp_tunnel': True,
     'remote_frp_server': 'frp-dry.com',
     'remote_frp_port': 49867,
-    'frp_token': 'game_share_secret_token',
-    'frp_bind_port': 7000,
-    'frp_http_port': 8080
+    'frp_token': 'game_share_secret_token'
 }
 
 # 工具类
@@ -97,26 +96,12 @@ class ConfigManager:
             Logger.error(f"保存配置失败: {str(e)}")
 
 class FRPManager:
-    """FRP 管理器"""
+    """FRP 管理器（仅客户端功能）"""
     
     def __init__(self, config):
         self.config = config
         self.frp_dir = 'frp_windows_amd64'
-        self.frps_path = os.path.join(self.frp_dir, 'frps.exe')
         self.frpc_path = os.path.join(self.frp_dir, 'frpc.exe')
-    
-    def create_frps_config(self):
-        """创建FRP服务器配置"""
-        config_content = f"""
-[common]
-bind_port = {self.config['frp_bind_port']}
-vhost_http_port = {self.config['frp_http_port']}
-token = {self.config['frp_token']}
-        """
-        
-        with open(os.path.join(self.frp_dir, 'frps.ini'), 'w', encoding='utf-8') as f:
-            f.write(config_content.strip())
-        return os.path.join(self.frp_dir, 'frps.ini')
     
     def create_frpc_config(self, local_port):
         """创建FRP客户端配置"""
@@ -135,35 +120,6 @@ custom_domains = {self.config['remote_frp_server']}
         with open(os.path.join(self.frp_dir, 'frpc.ini'), 'w', encoding='utf-8') as f:
             f.write(config_content.strip())
         return os.path.join(self.frp_dir, 'frpc.ini')
-    
-    def start_frp_server(self):
-        """启动FRP服务器"""
-        if not os.path.exists(self.frps_path):
-            Logger.error("FRP服务器文件不存在，请先下载FRP工具")
-            return None
-        
-        config_path = self.create_frps_config()
-        Logger.info(f"启动FRP服务器，配置文件: {config_path}")
-        
-        try:
-            process = subprocess.Popen(
-                [self.frps_path, '-c', config_path],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            
-            # 检查是否成功启动
-            time.sleep(1)
-            if process.poll() is None:
-                Logger.success(f"FRP服务器已启动，监听端口: {self.config['frp_bind_port']}")
-                return process
-            else:
-                Logger.error("FRP服务器启动失败")
-                return None
-        except Exception as e:
-            Logger.error(f"启动FRP服务器出错: {str(e)}")
-            return None
     
     def start_frp_client(self, local_port):
         """启动FRP客户端"""
@@ -334,22 +290,6 @@ class GameShareManager:
             Logger.error("启动游戏客户端失败")
             return False
     
-    def start_frps(self):
-        """启动FRP服务器"""
-        Logger.info("=== 启动FRP服务器 ===")
-        
-        # 启动FRP服务器
-        self.frp_process = self.frp_manager.start_frp_server()
-        
-        if self.frp_process:
-            Logger.success("FRP服务器已成功启动!")
-            Logger.info(f"HTTP端口: {self.config['frp_http_port']}")
-            Logger.info("按Ctrl+C退出")
-            return True
-        else:
-            Logger.error("启动FRP服务器失败")
-            return False
-    
     def start_remote_control(self):
         """启动远程控制服务器"""
         Logger.info("=== 启动远程控制服务器 ===")
@@ -396,7 +336,6 @@ class GameShareManager:
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description='游戏共享平台管理器')
-    parser.add_argument('--server', action='store_true', help='启动FRP服务器')
     parser.add_argument('--host', action='store_true', help='启动游戏主机模式')
     parser.add_argument('--client', action='store_true', help='启动游戏客户端模式')
     parser.add_argument('--download', action='store_true', help='下载FRP工具')
@@ -408,9 +347,7 @@ def main():
     
     try:
         # 根据参数执行相应操作
-        if args.server:
-            success = manager.start_frps()
-        elif args.host:
+        if args.host:
             success = manager.start_game_host()
         elif args.client:
             success = manager.start_game_client()
